@@ -18,13 +18,13 @@ class Day01Test {
     fun `test solve part 1`() {
         val result = solveDay01(exampleInput.lineSequence(), false)
 
-        assertEquals(result, "11");
+        assertEquals("11", result)
     }
 
     @Test
     fun `test solve part 2`() {
         val result = solveDay01(exampleInput.lineSequence(), true)
 
-        assertEquals(result, "31")
+        assertEquals("31", result)
     }
 }

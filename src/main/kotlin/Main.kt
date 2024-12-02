@@ -9,7 +9,8 @@ fun interface Day {
 }
 
 val DAYS = listOf(
-    Day(::solveDay01)
+    Day(::solveDay01),
+    Day(::solveDay02),
 )
 
 fun main(args: Array<String>) {
@@ -43,5 +44,5 @@ fun main(args: Array<String>) {
     val part2 = partNumber == "2"
 
     val output = day.solve(inputLines, part2)
-    println("Output: $output");
+    println("Output: $output")
 }

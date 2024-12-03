@@ -11,6 +11,7 @@ fun interface Day {
 val DAYS = listOf(
     Day(::solveDay01),
     Day(::solveDay02),
+    Day(::solveDay03),
 )
 
 fun main(args: Array<String>) {

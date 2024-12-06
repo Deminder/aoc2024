@@ -1,6 +1,6 @@
 package com.github.deminder
 
-typealias Rules = Map<Int, Set<Int>>
+private typealias Rules = Map<Int, Set<Int>>
 
 private fun doesLineBreakAnyRule(numberLine: List<Int>, firstBeforeSecondRules: Rules): Boolean {
     return numberLine

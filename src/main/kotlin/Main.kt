@@ -15,6 +15,7 @@ val DAYS = listOf(
     Day(::solveDay04),
     Day(::solveDay05),
     Day(::solveDay06),
+    Day(::solveDay07),
 )
 
 fun main(args: Array<String>) {

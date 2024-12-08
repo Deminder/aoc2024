@@ -1,8 +1,8 @@
 package com.github.deminder
 
-typealias Operation = (Long, Long) -> Long
+private typealias Operation = (Long, Long) -> Long
 
-data class Equation(
+private data class Equation(
     val testValue: Long,
     val operants: List<Long>
 ) {

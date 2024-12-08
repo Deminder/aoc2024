@@ -1,5 +1,5 @@
-import com.github.deminder.Board
-import com.github.deminder.solveDay06
+import com.github.deminder.Day05
+import com.github.deminder.Day06
 import com.github.deminder.shared.Direction
 import com.github.deminder.shared.VERBOSE
 import org.junit.jupiter.api.*
@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 
 class Day06Test {
 
+    private val day = Day06
 
     private val inputString = """
 ....#.....
@@ -24,14 +25,14 @@ class Day06Test {
 
     @Test
     fun `test solve part 1`() {
-        val result = solveDay06(inputString.lineSequence(), false)
+        val result = day.solve(inputString.lineSequence(), false)
 
         assertEquals("41", result)
     }
 
     @Test
     fun `test solve part 2`() {
-        val result = solveDay06(inputString.lineSequence(), true)
+        val result = day.solve(inputString.lineSequence(), true)
 
         assertEquals("6", result)
     }
@@ -39,7 +40,7 @@ class Day06Test {
     @Nested
     inner class BoardTest {
 
-        private val originalBoard = Board.parse(inputString.lineSequence())
+        private val originalBoard = Day06.Board.parse(inputString.lineSequence())
 
         @TestFactory
         fun `test guard walk positions`() = listOf(

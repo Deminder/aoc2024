@@ -10,14 +10,14 @@ fun interface Day {
 
 
 val DAYS = listOf(
-    Day(::solveDay01),
-    Day(::solveDay02),
-    Day(::solveDay03),
-    Day(::solveDay04),
-    Day(::solveDay05),
-    Day(::solveDay06),
-    Day(::solveDay07),
-    Day(::solveDay08),
+    Day01,
+    Day02,
+    Day03,
+    Day04,
+    Day05,
+    Day06,
+    Day07,
+    Day08,
 )
 
 fun main(args: Array<String>) {

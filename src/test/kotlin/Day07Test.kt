@@ -1,8 +1,9 @@
-import com.github.deminder.solveDay07
+import com.github.deminder.Day07
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class Day07Test {
+    private val day = Day07
 
     private val inputString = """
 190: 10 19
@@ -18,14 +19,14 @@ class Day07Test {
 
     @Test
     fun `test solve part 1`() {
-        val result = solveDay07(inputString.lineSequence(), false)
+        val result = day.solve(inputString.lineSequence(), false)
 
         assertEquals("3749", result)
     }
 
     @Test
     fun `test solve part 2`() {
-        val result = solveDay07(inputString.lineSequence(), true)
+        val result = day.solve(inputString.lineSequence(), true)
 
         assertEquals("11387", result)
     }

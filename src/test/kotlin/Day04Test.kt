@@ -1,14 +1,15 @@
-import com.github.deminder.solveDay03
-import com.github.deminder.solveDay04
+import com.github.deminder.Day04
+import com.github.deminder.Day08
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class Day04Test {
 
+    private val day = Day04
 
     @Test
     fun `test solve part 1`() {
-        val result = solveDay04(
+        val result = day.solve(
             """
         ....XXMAS.
         .SAMXMS...
@@ -28,7 +29,7 @@ class Day04Test {
 
     @Test
     fun `test solve part 2`() {
-        val result = solveDay04(
+        val result = day.solve(
             """
             .M.S......
             ..A..MSMS.

@@ -1,8 +1,13 @@
+import com.github.deminder.Board
 import com.github.deminder.solveDay06
+import com.github.deminder.shared.Direction
+import com.github.deminder.shared.VERBOSE
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+
 
 class Day06Test {
+
 
     private val inputString = """
 ....#.....
@@ -29,5 +34,41 @@ class Day06Test {
         val result = solveDay06(inputString.lineSequence(), true)
 
         assertEquals("6", result)
+    }
+
+    @Nested
+    inner class BoardTest {
+
+        private val originalBoard = Board.parse(inputString.lineSequence())
+
+        @TestFactory
+        fun `test guard walk positions`() = listOf(
+            Direction.UP to 6,
+            Direction.RIGHT to 7,
+            Direction.DOWN to 5,
+            Direction.LEFT to 3,
+        ).map { (direction, expectedLineLength) ->
+            DynamicTest.dynamicTest("should walk $direction for $expectedLineLength steps") {
+                val board = originalBoard.copy(guard = originalBoard.guard.copy(direction = direction))
+
+                val result = board.guard.positionsUntilLeavingOrNextObstruction(board.obstructions)
+
+                assertAll(
+                    { assertEquals(board.guard.pos, result[0]) },
+                    { assertEquals(board.guard.step().pos, result[1]) },
+                    { assertEquals(board.guard.step().step().pos, result[2]) },
+                    { assertEquals(expectedLineLength, result.size) }
+                )
+            }
+        }
+
+    }
+
+    companion object {
+        @JvmStatic
+        @BeforeAll
+        fun before() {
+            VERBOSE = true
+        }
     }
 }

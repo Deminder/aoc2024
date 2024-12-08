@@ -8,6 +8,7 @@ fun interface Day {
     fun solve(inputLines: Sequence<String>, part2: Boolean): String
 }
 
+
 val DAYS = listOf(
     Day(::solveDay01),
     Day(::solveDay02),

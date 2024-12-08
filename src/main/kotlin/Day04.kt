@@ -1,16 +1,11 @@
 package com.github.deminder
 
+import com.github.deminder.shared.Grid
+import com.github.deminder.shared.GridPos
+import com.github.deminder.shared.height
+import com.github.deminder.shared.width
 
-typealias CharGrid = List<List<Char>>
-typealias GridPos = Pair<Int, Int>
-
-private fun CharGrid.width(): Int {
-    return this.size
-}
-
-private fun CharGrid.height(): Int {
-    return this[0].size
-}
+private typealias CharGrid = Grid<Char>
 
 private fun CharGrid.rows(): List<List<GridPos>> {
     return (0..<this.height())

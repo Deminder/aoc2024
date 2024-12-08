@@ -1,118 +1,169 @@
 package com.github.deminder
 
-import com.github.deminder.shared.Direction
-import com.github.deminder.shared.Vec2
-import com.github.deminder.shared.move
+import com.github.deminder.shared.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.*
 
 
-private data class Guard(val pos: Vec2, val direction: Direction) {
-    fun stepCandidates(): Sequence<Guard> {
-        return generateSequence(this) { it.turn() }
-            .map { it.step() }
-    }
+data class Guard(val pos: Vec2, val direction: Direction) {
 
     fun step(): Guard {
         return copy(pos = pos.move(direction))
     }
 
-    private fun turn(): Guard {
+    fun turn(): Guard {
         return copy(direction = direction.clockwise())
     }
-}
 
-private data class Board(
-    val guard: Guard,
-    val obstructions: Set<Vec2>,
-    val bounds: Vec2,
-    val visits: Set<Guard> = emptySet(),
-) {
+    private fun positiveLinePositions(guardPos: Int, obstructions: List<Boolean>) =
+        guardPos until obstructions.subList(guardPos, obstructions.size)
+            .indexOf(true).let {
+                if (it == -1) obstructions.size + 1 else guardPos + it
+            }
 
-    companion object {
-        fun parse(inputLines: Sequence<String>): Board {
-            val points = inputLines
-                .flatMapIndexed { row, line -> line.mapIndexed { col, char -> Vec2(row, col) to char } }
-                .toList()
-            val guard = Guard(
-                points
-                    .find { (_, char) -> char == '^' }!!.first,
-                Direction.UP
-            )
-            val obstructions = points
-                .filter { (_, char) -> char == '#' }
-                .map { (pos, _) -> pos }
-                .toSet()
-            val positions = points
-                .map { (pos, _) -> pos }
+    private fun negativeLinePositions(reversePos: Int, reverseObstructions: List<Boolean>) =
+        positiveLinePositions(reverseObstructions.size - 1 - reversePos, reverseObstructions.reversed())
+            .map { pos -> reverseObstructions.size - 1 - pos }
 
-            return Board(
-                guard,
-                obstructions,
-                Vec2(positions.maxOf { (row, _) -> row }, positions.maxOf { (_, col) -> col })
-            )
+    private fun linePositions(
+        positiveDirection: Direction,
+        guardPos: Int,
+        obstructions: List<Boolean>
+    ) =
+        if (direction == positiveDirection)
+            positiveLinePositions(guardPos, obstructions)
+        else
+            negativeLinePositions(guardPos, obstructions)
+
+
+    fun positionsUntilLeavingOrNextObstruction(obstructions: Grid<Boolean>): List<Vec2> {
+        val (row, col) = pos
+        return when (direction) {
+            Direction.RIGHT, Direction.LEFT -> linePositions(
+                Direction.RIGHT,
+                col,
+                obstructions[row]
+            ).map { moveCol -> row to moveCol }
+
+            Direction.DOWN, Direction.UP -> linePositions(
+                Direction.DOWN,
+                row,
+                obstructions.column(col)
+            ).map { moveRow -> moveRow to col }
         }
     }
 
+}
+
+fun List<Guard>.indicateDirection() = map { it.direction }
+    .let {
+        if (it.size > 1) "+" else {
+            when (it[0]) {
+                Direction.UP, Direction.DOWN -> "|"
+                else -> "-"
+            }
+        }
+    }
+
+data class Board(
+    val guard: Guard,
+    val obstructions: Grid<Boolean>,
+    val visits: Set<Guard> = emptySet(),
+) {
+
     fun distinctPositionsVisitedBeforeLeavingBoard(): Set<Vec2> {
-        return stepUntilLeavingBoardOrLooping()
+        return stepUntilLeavingOrLooping()
             .visits
             .map { it.pos }
             .toSet()
     }
 
-    fun obstructionPositionsWhichCauseLooping(): Set<Vec2> {
-        val obstructionCandidates = distinctPositionsVisitedBeforeLeavingBoard()
+    fun obstructionPositionsWhichCauseLooping(): Set<Vec2> = runBlocking {
+        distinctPositionsVisitedBeforeLeavingBoard()
             .minus(guard.pos)
-
-        return runBlocking {
-            obstructionCandidates
-                .map {
-                    async(Dispatchers.Default) {
-                        it to stepUntilLeavingBoardOrLooping(it).inLoop()
-                    }
-                }.awaitAll()
-                .filter { (_, isLoop) -> isLoop }
-                .map { (pos, _) -> pos }
-                .toSet()
-        }
+            // Try out each obstruction candidate
+            .map {
+                async(Dispatchers.Default) {
+                    it to obstruct(it).stepUntilLeavingOrLooping().inLoop()
+                }
+            }.awaitAll()
+            .filter { (_, isLoop) -> isLoop }
+            .map { (pos, _) -> pos }
+            .toSet()
     }
 
+    private fun obstruct(pos: Vec2): Board =
+        this.copy(obstructions = obstructions.mapIndexed { row, line ->
+            if (row == pos.first)
+                line.mapIndexed { col, obstructed -> if (col == pos.second) true else obstructed }
+            else
+                line
+        })
 
-    private fun stepUntilLeavingBoardOrLooping(extraObstruction: Vec2? = null): Board {
-        var curStep = step(extraObstruction)
-        do {
-            val nextBoard = curStep.step(extraObstruction)
-            if (curStep.guardIsInBoard() && !curStep.inLoop()) {
-                curStep = nextBoard
-            } else {
-                break
-            }
-        } while (true)
-        return curStep
-    }
+
+    private fun stepUntilLeavingOrLooping(): Board =
+        generateSequence(this) { it.stepUntilLeavingOrNextObstruction() }
+            .find {
+                if (VERBOSE) {
+                    println(it); println()
+                }
+                !it.guardIsInBoard() || it.inLoop()
+            }!!
 
     private fun guardIsInBoard(): Boolean {
-        return inBounds(guard.pos)
-    }
-
-    private fun inBounds(pos: Vec2): Boolean {
-        return pos.first in 0..bounds.first && pos.second in 0..bounds.second
+        return guard.pos inBounds obstructions.bounds()
     }
 
     private fun inLoop(): Boolean {
-        return visits.contains(guard)
+        return guard in visits
     }
 
-    private fun step(extraObstruction: Vec2? = null): Board {
-        val nextGuard = guard
-            .stepCandidates()
-            .find { !obstructions.contains(it.pos) && extraObstruction != it.pos }!!
+    private fun stepUntilLeavingOrNextObstruction(): Board =
+        guard
+            .positionsUntilLeavingOrNextObstruction(obstructions)
+            .let { positions ->
+                this.copy(
+                    guard = guard.copy(pos = positions.last()).turn(),
+                    visits = visits.plus(positions.dropLast(1).map { guard.copy(pos = it) })
+                )
+            }
 
-        return this.copy(
-            guard = nextGuard,
-            visits = visits.plus(guard)
-        )
+    @Override
+    override fun toString() = visits.groupBy { v -> v.pos }
+        .let { visitsByPos ->
+            println(visitsByPos.size)
+            obstructions
+                .mapIndexed { row, line ->
+                    line.mapIndexed { col, obstructed ->
+                        Vec2(row, col).let { pos ->
+                            if (guard.pos == pos) guard.direction.toString() else {
+                                if (obstructed) "#" else {
+                                    visitsByPos[pos]?.indicateDirection() ?: "."
+                                }
+                            }
+                        }
+                    }.joinToString("")
+                }.joinToString("\n")
+        }
+
+    companion object {
+        fun parse(inputLines: Sequence<String>): Board {
+            val lines = inputLines.toList()
+            val guard = Guard(
+                lines
+                    .flatMapIndexed { row, line -> line.mapIndexed { col, char -> Vec2(row, col) to char } }
+                    .find { (_, char) -> char == '^' }!!.first,
+                Direction.UP
+            )
+            val obstructions = lines
+                .map { line -> line.map { char -> char == '#' } }
+                .toList()
+
+            return Board(
+                guard,
+                obstructions
+            )
+        }
     }
 }
 
@@ -128,5 +179,4 @@ fun solveDay06(inputLines: Sequence<String>, part2: Boolean): String {
     }
         .size
         .toString()
-
 }

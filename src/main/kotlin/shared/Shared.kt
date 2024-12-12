@@ -22,6 +22,21 @@ fun <T> Grid<T>.bounds(): Vec2 {
 
 fun <T> Grid<T>.column(col: Int): List<T> = map { line -> line[col] }
 
+fun <T> Grid<T>.positions(): List<GridPos> =
+    flatMapIndexed { row, rowValues -> rowValues.indices.map { col -> row to col } }
+
+fun <T> Grid<T>.getByPos(pos: GridPos): T = this[pos.first][pos.second]
+
+fun <T, E> Grid<T>.mapGrid(map: (GridPos) -> E): Grid<E> =
+    mapIndexed { row, rowValues -> rowValues.indices.map { map.invoke(row to it) } }
+
+fun <T> Grid<T>.copyWithValueSet(value: T, pos: GridPos): Grid<T> = mapIndexed { row, rowValues ->
+    if (row == pos.first)
+        rowValues.mapIndexed { col, colValue -> if (col == pos.second) value else colValue }
+    else
+        rowValues
+}
+
 enum class Direction(val vec2: Vec2) {
     UP(-1 to 0),
     DOWN(1 to 0),

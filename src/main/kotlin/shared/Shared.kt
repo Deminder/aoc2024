@@ -2,7 +2,7 @@ package com.github.deminder.shared
 
 typealias Vec2 = Pair<Int, Int>
 typealias Grid<T> = List<List<T>>
-typealias GridPos = Pair<Int, Int>
+typealias GridPos = Vec2
 
 
 var VERBOSE = false
@@ -20,6 +20,9 @@ fun <T> Grid<T>.bounds(): Vec2 {
     return Vec2(this.width() - 1, this.height() - 1)
 }
 
+fun <T> Grid<T>.includesPos(pos: GridPos): Boolean = pos inBounds bounds()
+
+
 fun <T> Grid<T>.column(col: Int): List<T> = map { line -> line[col] }
 
 fun <T> Grid<T>.positions(): List<GridPos> =
@@ -29,6 +32,9 @@ fun <T> Grid<T>.getByPos(pos: GridPos): T = this[pos.first][pos.second]
 
 fun <T, E> Grid<T>.mapGrid(map: (GridPos) -> E): Grid<E> =
     mapIndexed { row, rowValues -> rowValues.indices.map { map.invoke(row to it) } }
+
+fun <T, E> Grid<T>.mapGridIndexed(mapIndexed: (T, GridPos) -> E): Grid<E> =
+    mapIndexed { row, rowValues -> rowValues.mapIndexed { col, value -> mapIndexed.invoke(value, row to col) } }
 
 fun <T> Grid<T>.copyWithValueSet(value: T, pos: GridPos): Grid<T> = mapIndexed { row, rowValues ->
     if (row == pos.first)

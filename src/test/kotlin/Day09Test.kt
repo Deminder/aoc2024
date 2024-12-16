@@ -40,7 +40,7 @@ class Day09Test {
 
                 val result = file.checkSum()
 
-                assertEquals(expectedCheckSum, result)
+                assertEquals(expectedCheckSum.toLong(), result)
             }
         }
     }

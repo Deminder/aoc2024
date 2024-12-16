@@ -87,3 +87,11 @@ operator fun Vec2.minus(vec2: Vec2): Vec2 {
 operator fun Int.times(vec2: Vec2): Vec2 {
     return Vec2(this * vec2.first, this * vec2.second)
 }
+
+fun Vec2.dot(vec2: Vec2): Int {
+    return this.first * vec2.first + this.second * vec2.second
+}
+
+fun Vec2.rot90(): Vec2 {
+    return Vec2(this.second, -1 * this.first)
+}

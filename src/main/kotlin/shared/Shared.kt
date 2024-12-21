@@ -1,5 +1,10 @@
 package com.github.deminder.shared
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
+
 typealias Vec2 = Pair<Int, Int>
 typealias Grid<T> = List<List<T>>
 typealias GridPos = Vec2
@@ -68,11 +73,22 @@ enum class Direction(val vec2: Vec2) {
         }
 }
 
+enum class DiagonalDirection(val vec2: Vec2) {
+    UP_RIGHT(-1 to 1),
+    DOWN_RIGHT(1 to 1),
+    DOWN_LEFT(1 to -1),
+    UP_LEFT(-1 to 1);
+}
+
 infix fun Vec2.inBounds(bounds: Vec2): Boolean {
     return this.first in 0..bounds.first && this.second in 0..bounds.second
 }
 
 fun Vec2.move(direction: Direction): Vec2 {
+    return this.plus(direction.vec2)
+}
+
+fun Vec2.move(direction: DiagonalDirection): Vec2 {
     return this.plus(direction.vec2)
 }
 
@@ -82,6 +98,18 @@ operator fun Vec2.plus(vec2: Vec2): Vec2 {
 
 operator fun Vec2.minus(vec2: Vec2): Vec2 {
     return Vec2(this.first - vec2.first, this.second - vec2.second)
+}
+
+operator fun Vec2.rem(vec2: Vec2): Vec2 {
+    return Vec2(this.first % vec2.first, this.second % vec2.second)
+}
+
+operator fun Vec2.div(vec2: Vec2): Vec2 {
+    return Vec2(this.first / vec2.first, this.second / vec2.second)
+}
+
+operator fun Vec2.div(scalar: Int): Vec2 {
+    return Vec2(this.first / scalar, this.second / scalar)
 }
 
 operator fun Int.times(vec2: Vec2): Vec2 {
@@ -94,4 +122,9 @@ fun Vec2.dot(vec2: Vec2): Int {
 
 fun Vec2.rot90(): Vec2 {
     return Vec2(this.second, -1 * this.first)
+}
+
+fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
+    map { async(Dispatchers.Default) { mapper.invoke(it) } }
+        .awaitAll()
 }

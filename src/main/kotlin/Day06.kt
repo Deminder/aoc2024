@@ -79,19 +79,15 @@ object Day06 : Day {
                 .toSet()
         }
 
-        fun obstructionPositionsWhichCauseLooping(): Set<Vec2> = runBlocking {
+        fun obstructionPositionsWhichCauseLooping(): Set<Vec2> =
             distinctPositionsVisitedBeforeLeavingBoard()
                 .minus(guard.pos)
                 // Try out each obstruction candidate
-                .map {
-                    async(Dispatchers.Default) {
-                        it to obstruct(it).stepUntilLeavingOrLooping().inLoop()
-                    }
-                }.awaitAll()
+                .mapAsync { it to obstruct(it).stepUntilLeavingOrLooping().inLoop() }
                 .filter { (_, isLoop) -> isLoop }
                 .map { (pos, _) -> pos }
                 .toSet()
-        }
+
 
         private fun obstruct(pos: Vec2): Board =
             this.copy(obstructions = obstructions.mapIndexed { row, line ->

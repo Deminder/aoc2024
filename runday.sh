@@ -17,9 +17,12 @@ then
 		--output "$INPUT_FILE"
 fi
 
+# Build jar
+./gradlew :installDist
+
 # Run puzzle solution
 
 for part in 1 2
 do
-  ./gradlew :run --args="-i \"$INPUT_FILE\" ${day} ${part}"
+  build/install/aoc2024/bin/aoc2024 -i "$INPUT_FILE" ${day} ${part}
 done

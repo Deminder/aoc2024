@@ -38,8 +38,8 @@ fun <T> Grid<T>.getByPos(pos: GridPos): T = this[pos.first][pos.second]
 fun <T, E> Grid<T>.mapGrid(map: (GridPos) -> E): Grid<E> =
     mapIndexed { row, rowValues -> rowValues.indices.map { map.invoke(row to it) } }
 
-fun <T, E> Grid<T>.mapGridIndexed(mapIndexed: (T, GridPos) -> E): Grid<E> =
-    mapIndexed { row, rowValues -> rowValues.mapIndexed { col, value -> mapIndexed.invoke(value, row to col) } }
+fun <T, E> Grid<T>.mapGridIndexed(mapIndexed: (GridPos, T) -> E): Grid<E> =
+    mapIndexed { row, rowValues -> rowValues.mapIndexed { col, value -> mapIndexed.invoke(row to col, value) } }
 
 fun <T> Grid<T>.copyWithValueSet(value: T, pos: GridPos): Grid<T> = mapIndexed { row, rowValues ->
     if (row == pos.first)
@@ -48,19 +48,21 @@ fun <T> Grid<T>.copyWithValueSet(value: T, pos: GridPos): Grid<T> = mapIndexed {
         rowValues
 }
 
+fun <T> Grid<T>.withValues(valueMap: Map<GridPos, T>) =
+    mapGrid { valueMap[it] ?: getByPos(it) }
+
+
 enum class Direction(val vec2: Vec2) {
     UP(-1 to 0),
     DOWN(1 to 0),
     LEFT(0 to -1),
     RIGHT(0 to 1);
 
-    fun clockwise(): Direction {
-        return when (this) {
-            UP -> RIGHT
-            RIGHT -> DOWN
-            DOWN -> LEFT
-            LEFT -> UP
-        }
+    fun right() = when (this) {
+        UP -> RIGHT
+        RIGHT -> DOWN
+        DOWN -> LEFT
+        LEFT -> UP
     }
 
     @Override
@@ -71,6 +73,25 @@ enum class Direction(val vec2: Vec2) {
             LEFT -> "<"
             RIGHT -> ">"
         }
+
+    fun left() = when (this) {
+        UP -> LEFT
+        LEFT -> DOWN
+        DOWN -> RIGHT
+        RIGHT -> UP
+    }
+
+    companion object {
+        fun parse(char: Char) =
+            when (char) {
+                '^' -> UP
+                'v' -> DOWN
+                '<' -> LEFT
+                '>' -> RIGHT
+                else -> throw IllegalArgumentException("Unknown direction: $char")
+            }
+
+    }
 }
 
 enum class DiagonalDirection(val vec2: Vec2) {
@@ -128,3 +149,21 @@ fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
     map { async(Dispatchers.Default) { mapper.invoke(it) } }
         .awaitAll()
 }
+
+fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<Sequence<T>> =
+    iterator().let { iterator ->
+        sequence {
+            while (iterator.hasNext()) {
+                yield(sequence {
+                    while (iterator.hasNext()) {
+                        val element = iterator.next()
+                        if (predicate(element)) {
+                            break
+                        } else {
+                            yield(element)
+                        }
+                    }
+                })
+            }
+        }
+    }

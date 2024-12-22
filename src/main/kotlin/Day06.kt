@@ -1,8 +1,6 @@
 package com.github.deminder
 
 import com.github.deminder.shared.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.*
 
 object Day06 : Day {
 
@@ -13,7 +11,7 @@ object Day06 : Day {
         }
 
         fun turn(): Guard {
-            return copy(direction = direction.clockwise())
+            return copy(direction = direction.right())
         }
 
         private fun positiveLinePositions(guardPos: Int, obstructions: List<Boolean>) =

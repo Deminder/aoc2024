@@ -61,7 +61,7 @@ object Day12 : Day {
         .count { direction ->
             pos.move(direction) !in this &&
                     // Count if the side is ending
-                    pos.move(direction.clockwise())
+                    pos.move(direction.right())
                         .let { sideContinueTile -> sideContinueTile.move(direction) in this || sideContinueTile !in this }
         }
 

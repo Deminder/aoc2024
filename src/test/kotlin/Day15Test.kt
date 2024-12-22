@@ -94,7 +94,6 @@ class Day15Test {
         @BeforeAll
         fun before() {
             VERBOSE = true
-            Day14.ROOM_SIZE = Vec2(11, 7)
         }
     }
 

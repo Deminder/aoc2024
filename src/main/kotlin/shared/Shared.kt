@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import java.util.*
 
 typealias Vec2 = Pair<Int, Int>
 typealias Grid<T> = List<List<T>>
@@ -167,3 +168,64 @@ fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<Sequence<T>> =
             }
         }
     }
+
+data class ShortestPathResult<T>(
+    val targets: List<T>,
+    val distances: Map<T, Int>,
+    val previous: Map<T, List<T>>
+) {
+    fun minTargetDistance() =
+        targets.minOf { distances[it]!! }
+
+    fun nodesOnShortestPathToTarget() = generateSequence(
+        minTargetDistance()
+            .let { minDist -> targets.filter { distances[it] == minDist }.toList() }
+                to emptySet<T>()
+    ) { (nodes, visited) ->
+        nodes.flatMap { previous[it] ?: emptyList() }
+            .toList() to (visited + nodes)
+    }
+        .find { (nodes, _) -> nodes.isEmpty() }!!
+        .let { (_, visited) -> visited }
+
+}
+
+
+fun <T> shortestPath(
+    initialNode: T,
+    neighbors: (T) -> Sequence<Pair<Int, T>>,
+    isTarget: (T) -> Boolean,
+): ShortestPathResult<T> {
+    val nodeQueue = PriorityQueue<Pair<Int, T>>(compareBy { it.first })
+    nodeQueue.add(0 to initialNode)
+
+    val prev: MutableMap<T, MutableList<T>> = mutableMapOf()
+    val dist: MutableMap<T, Int> = mutableMapOf(initialNode to 0)
+    val targets: MutableList<T> = mutableListOf()
+
+    while (nodeQueue.isNotEmpty()) {
+        val (distance, node) = nodeQueue.poll()
+        if (distance == dist[node]) {
+            neighbors(node).forEach { (weight, neighbor) ->
+                val bestDistance = dist[neighbor] ?: Int.MAX_VALUE
+                val currentDistance = weight + distance
+
+                if (currentDistance < bestDistance) {
+                    prev[neighbor] = mutableListOf(node)
+                    dist[neighbor] = currentDistance
+                    if (isTarget(neighbor)) {
+                        targets.add(neighbor)
+                    } else {
+                        nodeQueue.add(currentDistance to neighbor)
+                    }
+                } else if (currentDistance == bestDistance) {
+                    prev[neighbor]!!.add(node)
+                }
+
+            }
+        }
+    }
+    return ShortestPathResult(
+        targets, dist, prev
+    )
+}

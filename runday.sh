@@ -21,8 +21,8 @@ fi
 ./gradlew :installDist
 
 # Run puzzle solution
-
 for part in 1 2
 do
-  build/install/aoc2024/bin/aoc2024 -i "$INPUT_FILE" ${day} ${part}
+  time build/install/aoc2024/bin/aoc2024 -i "$INPUT_FILE" ${day} ${part}
+  echo
 done

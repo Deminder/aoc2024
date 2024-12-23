@@ -26,6 +26,7 @@ val DAYS = listOf(
     Day14,
     Day15,
     Day16,
+    Day17,
 )
 
 fun main(args: Array<String>) {
@@ -52,7 +53,12 @@ fun main(args: Array<String>) {
     parser.parse(args)
     println("[Day $dayNumber] [Part $partNumber] ${inputFileName?.let { "with input file $it." } ?: "with input from stdin."}")
 
-    val day = DAYS[dayNumber.toString().toInt() - 1]
+    val dayIndex = dayNumber.toString().toInt() - 1
+    if (dayIndex !in DAYS.indices) {
+        error("Invalid day number $dayNumber")
+    }
+
+    val day = DAYS[dayIndex]
     val inputLines: Sequence<String> = inputFileName?.let {
         File(it).bufferedReader().lineSequence()
     } ?: generateSequence(::readLine)

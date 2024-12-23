@@ -35,7 +35,7 @@ object Day16 : Day {
             }.joinToString("\n") { it.joinToString("") }
 
         fun countSitPositions() = findShortestPathsFromStartToEnd()
-            .nodesOnShortestPathToTarget()
+            .nodesOfAllShortestPathsToTarget()
             .let { if (VERBOSE) println(show(it)); it }
             .map { it.position }
             .toSet()

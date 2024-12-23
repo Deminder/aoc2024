@@ -5,6 +5,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import java.util.*
+import kotlin.math.min
 
 typealias Vec2 = Pair<Int, Int>
 typealias Grid<T> = List<List<T>>
@@ -106,6 +107,7 @@ infix fun Vec2.inBounds(bounds: Vec2): Boolean {
     return this.first in 0..bounds.first && this.second in 0..bounds.second
 }
 
+
 fun Vec2.move(direction: Direction): Vec2 {
     return this.plus(direction.vec2)
 }
@@ -174,22 +176,35 @@ data class ShortestPathResult<T>(
     val distances: Map<T, Int>,
     val previous: Map<T, List<T>>
 ) {
+    fun hasFoundTarget() = targets.isNotEmpty()
+
     fun minTargetDistance() =
         targets.minOf { distances[it]!! }
 
-    fun nodesOnShortestPathToTarget() = generateSequence(
+    private fun nearestTargets() =
         minTargetDistance()
             .let { minDist -> targets.filter { distances[it] == minDist }.toList() }
-                to emptySet<T>()
-    ) { (nodes, visited) ->
-        nodes.flatMap { previous[it] ?: emptyList() }
-            .toList() to (visited + nodes)
+
+    private fun traceSpanningTree(
+        initialNodes: List<T>,
+        childrenOfNodes: (List<T>) -> List<T>
+    ) = generateSequence(initialNodes to emptySet<T>()) { (nodes, visited) ->
+        childrenOfNodes(nodes) to (visited + nodes)
     }
         .find { (nodes, _) -> nodes.isEmpty() }!!
         .let { (_, visited) -> visited }
 
-}
+    fun nodesOfShortestPathToTarget() = traceSpanningTree(listOf(nearestTargets().first())) { nodes ->
+        (previous[nodes.first()] ?: emptyList())
+            .let { it.subList(0, min(1, it.size)) }
+    }
 
+    fun nodesOfAllShortestPathsToTarget() = traceSpanningTree(nearestTargets()) { nodes ->
+        nodes.flatMap { previous[it] ?: emptyList() }
+            .toList()
+    }
+
+}
 
 fun <T> shortestPath(
     initialNode: T,

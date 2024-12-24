@@ -147,6 +147,19 @@ fun Vec2.rot90(): Vec2 {
     return Vec2(this.second, -1 * this.first)
 }
 
+private fun pointsInUpperRightDiamondQuadrantShell(radius: Int): Sequence<Vec2> =
+    (1..radius).asSequence()
+        .map { x -> x to (radius - x) }
+
+fun pointsInDiamondShell(radius: Int) =
+    generateSequence(pointsInUpperRightDiamondQuadrantShell(radius).toList()) { rotatedPoints -> rotatedPoints.map { it.rot90() }}
+        .take(4)
+        .flatten()
+
+fun pointsInDiamond(radius: Int) =
+    (1..radius).asSequence()
+        .flatMap { pointsInDiamondShell(it) }
+
 fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
     map { async(Dispatchers.Default) { mapper.invoke(it) } }
         .awaitAll()

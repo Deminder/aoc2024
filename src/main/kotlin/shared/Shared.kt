@@ -5,7 +5,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
 import java.util.*
-import kotlin.math.min
 
 typealias Vec2 = Pair<Int, Int>
 typealias Grid<T> = List<List<T>>
@@ -153,7 +152,7 @@ fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
         .awaitAll()
 }
 
-fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<Sequence<T>> =
+fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<List<T>> =
     iterator().let { iterator ->
         sequence {
             while (iterator.hasNext()) {
@@ -166,7 +165,7 @@ fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<Sequence<T>> =
                             yield(element)
                         }
                     }
-                })
+                }.toList())
             }
         }
     }
@@ -178,34 +177,62 @@ data class ShortestPathResult<T>(
 ) {
     fun hasFoundTarget() = targets.isNotEmpty()
 
-    fun minTargetDistance() =
+    fun minTargetDistance() = if (hasFoundTarget())
         targets.minOf { distances[it]!! }
+    else
+        -1
 
     private fun nearestTargets() =
         minTargetDistance()
             .let { minDist -> targets.filter { distances[it] == minDist }.toList() }
 
-    private fun traceSpanningTree(
-        initialNodes: List<T>,
-        childrenOfNodes: (List<T>) -> List<T>
-    ) = generateSequence(initialNodes to emptySet<T>()) { (nodes, visited) ->
-        childrenOfNodes(nodes) to (visited + nodes)
-    }
-        .find { (nodes, _) -> nodes.isEmpty() }!!
-        .let { (_, visited) -> visited }
 
-    fun nodesOfShortestPathToTarget() = traceSpanningTree(listOf(nearestTargets().first())) { nodes ->
-        (previous[nodes.first()] ?: emptyList())
-            .let { it.subList(0, min(1, it.size)) }
+    private fun countShortestPathsTo(
+        initialNode: T
+    ): Map<T, Long> {
+        val nodeQueue = PriorityQueue<Pair<T, T>>(compareBy { -distances[it.second]!! })
+        nodeQueue.addAll(previous[initialNode]!!.map { initialNode to it })
+        // Count the number of paths which lead to the initial node
+        val pathCounts = mutableMapOf(initialNode to 1L)
+
+        while (nodeQueue.isNotEmpty()) {
+            val (parentNode, node) = nodeQueue.poll()
+            if (node !in pathCounts) {
+                // Continue search if this is the first visit of the node
+                nodeQueue.addAll(previous[node]?.map { node to it } ?: emptyList())
+            }
+            pathCounts[node] = (pathCounts[node] ?: 0) + pathCounts[parentNode]!!
+        }
+
+        return pathCounts
     }
 
-    fun nodesOfAllShortestPathsToTarget() = traceSpanningTree(nearestTargets()) { nodes ->
-        nodes.flatMap { previous[it] ?: emptyList() }
-            .toList()
-    }
+
+    fun nodesOfShortestPathToTarget() = if (hasFoundTarget())
+        generateSequence(nearestTargets().first()) { previous[it]?.first() }.toSet()
+    else
+        emptySet()
+
+    fun nodesOfAllShortestPathsToTarget() = if (hasFoundTarget())
+        nearestTargets()
+            .flatMap { countShortestPathsTo(it).keys }
+            .toSet()
+    else
+        emptySet()
+
+    fun countPathsToTarget(): Long = if (hasFoundTarget())
+        nearestTargets()
+            .flatMap { countShortestPathsTo(it).values }
+            .max()
+    else
+        0
+
 
 }
 
+/**
+ * https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+ */
 fun <T> shortestPath(
     initialNode: T,
     neighbors: (T) -> Sequence<Pair<Int, T>>,

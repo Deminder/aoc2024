@@ -152,13 +152,23 @@ private fun pointsInUpperRightDiamondQuadrantShell(radius: Int): Sequence<Vec2> 
         .map { x -> x to (radius - x) }
 
 fun pointsInDiamondShell(radius: Int) =
-    generateSequence(pointsInUpperRightDiamondQuadrantShell(radius).toList()) { rotatedPoints -> rotatedPoints.map { it.rot90() }}
+    generateSequence(pointsInUpperRightDiamondQuadrantShell(radius).toList()) { rotatedPoints -> rotatedPoints.map { it.rot90() } }
         .take(4)
         .flatten()
 
 fun pointsInDiamond(radius: Int) =
     (1..radius).asSequence()
         .flatMap { pointsInDiamondShell(it) }
+
+fun <T> List<T>.permutations(): Sequence<List<T>> = if (size > 1)
+    asSequence()
+        .flatMapIndexed { firstIndex, first ->
+            filterIndexed { index, _ -> firstIndex != index }
+                .permutations()
+                .map { listOf(first).plus(it) }
+        }
+else
+    sequenceOf(this)
 
 fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
     map { async(Dispatchers.Default) { mapper.invoke(it) } }

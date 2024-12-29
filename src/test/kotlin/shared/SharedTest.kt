@@ -1,9 +1,6 @@
 package shared
 
-import com.github.deminder.shared.Direction
-import com.github.deminder.shared.Vec2
-import com.github.deminder.shared.move
-import com.github.deminder.shared.pointsInDiamond
+import com.github.deminder.shared.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertAll
@@ -67,6 +64,22 @@ class SharedTest {
         assertAll(counts.map { (pos, count) ->
             { assertEquals(1, count, "Point $pos should only occur once") }
         })
+    }
+
+    @Test
+    fun `test permutations`() {
+        val perms = listOf(1, 2, 3).permutations().toList()
+
+        assertEquals(
+            listOf(
+                listOf(1, 2, 3),
+                listOf(1, 3, 2),
+                listOf(2, 1, 3),
+                listOf(2, 3, 1),
+                listOf(3, 1, 2),
+                listOf(3, 2, 1)
+            ), perms
+        )
     }
 
 }

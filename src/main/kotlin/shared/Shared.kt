@@ -175,6 +175,14 @@ fun <T, R> Iterable<T>.mapAsync(mapper: (T) -> R): Iterable<R> = runBlocking {
         .awaitAll()
 }
 
+fun <T> List<T>.pairs(): Sequence<Pair<T, T>> = indices
+    .asSequence()
+    .flatMap { first ->
+        (first + 1..<size)
+            .map { second -> this[first] to this[second] }
+    }
+
+
 fun <T> Sequence<T>.split(predicate: (T) -> Boolean): Sequence<List<T>> =
     iterator().let { iterator ->
         sequence {
@@ -270,7 +278,9 @@ fun <T> shortestPath(
 
     while (nodeQueue.isNotEmpty()) {
         val (distance, node) = nodeQueue.poll()
-        if (distance == dist[node]) {
+        if (isTarget(node)) {
+            targets.add(node)
+        } else if (distance == dist[node]) {
             neighbors(node).forEach { (weight, neighbor) ->
                 val bestDistance = dist[neighbor] ?: Int.MAX_VALUE
                 val currentDistance = weight + distance
@@ -278,11 +288,7 @@ fun <T> shortestPath(
                 if (currentDistance < bestDistance) {
                     prev[neighbor] = mutableListOf(node)
                     dist[neighbor] = currentDistance
-                    if (isTarget(neighbor)) {
-                        targets.add(neighbor)
-                    } else {
-                        nodeQueue.add(currentDistance to neighbor)
-                    }
+                    nodeQueue.add(currentDistance to neighbor)
                 } else if (currentDistance == bestDistance) {
                     prev[neighbor]!!.add(node)
                 }

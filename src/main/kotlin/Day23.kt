@@ -31,7 +31,7 @@ object Day23 : Day {
 
     private fun Edges.cliques() =
         generateSequence(threeCliques() to 3) { (cliques, size) ->
-            if (VERBOSE) println(cliques.size);
+            if (VERBOSE) println(cliques.size)
             growCliques(cliques, size) to (size + 1)
         }
             .map { (cliques, _) -> cliques }

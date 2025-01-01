@@ -58,14 +58,6 @@ class Day25Test {
         assertEquals("3", result)
     }
 
-
-    @Test
-    fun `test solve part 2`() {
-        val result = day.solve(inputString.lineSequence(), true)
-
-        assertEquals("", result)
-    }
-
     companion object {
         @JvmStatic
         @BeforeAll
